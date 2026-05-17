@@ -46,7 +46,7 @@ export const configOptions = {
     desc: 'Display chat as a transparent overlay on top of the video'
   },
   [CHAT_POSITION]: {
-    default: 'Bottom Right',
+    default: 'Top Right',
     options: ['Top Left', 'Top Right', 'Bottom Left', 'Bottom Right'],
     desc: 'Chat position'
   },
@@ -55,7 +55,7 @@ export const configOptions = {
     desc: 'Chat overlay width in pixels'
   },
   [CHAT_OVERLAY_HEIGHT]: {
-    default: 100,
+    default: 75,
     desc: 'Chat overlay height in percent'
   },
   [CHAT_OVERLAY_FONT_SIZE]: {
