@@ -5,6 +5,5 @@
 
     "lib": ["ESNext", "DOM"]
   },
-  "include": ["./src"],
-  "references": [{ "path": "./tsconfig.tooling.json" }]
+  "include": ["./src"]
 }
