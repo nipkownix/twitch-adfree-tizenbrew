@@ -20,7 +20,7 @@ export const configOptions = {
     desc: 'Enable low latency mode (experimental)'
   },
   [USE_CUSTOM_PROXY]: {
-    default: true,
+    default: false,
     desc: 'Use custom proxy URL for HLS streaming (experimental)'
   },
   [CUSTOM_PROXY_URL]: {
