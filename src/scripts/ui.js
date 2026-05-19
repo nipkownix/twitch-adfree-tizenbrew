@@ -499,6 +499,13 @@ const eventHandler = (evt) => {
         const nextBtn = navigationList[nextIndex];
         if (nextBtn) {
           nextBtn.focus();
+          // Signal activity to Twitch to prevent UI timeout
+          const rect = nextBtn.getBoundingClientRect();
+          document.dispatchEvent(new MouseEvent('mousemove', {
+            bubbles: true,
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2
+          }));
           evt.preventDefault();
           evt.stopPropagation();
           return false;

@@ -158,27 +158,6 @@
   margin-right: 4px;
 }
 
-.taf-settings-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: #efeff1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border-radius: 4px;
-}
-
-.taf-settings-btn:hover,
-.taf-settings-btn:focus {
-  background: rgba(255, 255, 255, 0.1);
-  outline: none;
-  color: #bf94ff;
-}
-
 .taf-notification-container {
   position: fixed;
   right: 10px;
