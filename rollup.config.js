@@ -21,7 +21,7 @@ export default {
   plugins: [
     // Import CSS files as plain strings.
     // ui.js injects them via a <style> element — no style-loader needed.
-    string({ include: '**/*.css' }),
+    string({ include: ['**/*.css', '**/patch_amazon_worker.js'] }),
 
     // Resolve node_modules imports (core-js-pure, whatwg-fetch, etc.)
     nodeResolve({ browser: true, preferBuiltins: false }),

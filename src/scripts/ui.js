@@ -470,9 +470,7 @@ const eventHandler = (evt) => {
         || tafBtn.closest('[role="application"]')
         || document.body;
       const allButtons = Array.from(playerContainer.querySelectorAll('button, a[href]')).filter(btn => {
-        // Filter out hidden/disabled buttons and non-interactive elements
-        const style = window.getComputedStyle(btn);
-        return style.display !== 'none' && style.visibility !== 'hidden' && btn.offsetParent !== null;
+        return btn.offsetParent !== null;
       });
 
       // Build navigation list and find TAF position
@@ -610,14 +608,21 @@ function injectSettingsButton() {
 
 function handleAdsAndConsentModals() {
   const enableAdBlock = configRead(ENABLE_AD_BLOCK);
+  let videoElement = null;
+  let cookiesHandled = false;
+  let pendingFlush = false;
 
-  const observer = new MutationObserver(() => {
+  function flush() {
+    pendingFlush = false;
+
     injectSettingsButton();
-    const adElement = document.querySelector(bannerAdSelector);
-    const videoElement = document.querySelector('video');
+
+    if (!videoElement || !document.contains(videoElement)) {
+      videoElement = document.querySelector('video');
+    }
 
     if (videoElement && enableAdBlock) {
-      const isAdVisible = !!adElement;
+      const isAdVisible = !!document.querySelector(bannerAdSelector);
       const shouldMute =
         isAdVisible &&
         (!videoElement.muted || videoElement.style.display !== 'none');
@@ -635,15 +640,16 @@ function handleAdsAndConsentModals() {
       }
     }
 
-    // Auto-reject cookies if the modal is present
-    const rejectCookiesButton = document.querySelector(REJECT_COOKIES_SELECTOR);
-    const modalSvg = document.querySelector(MODAL_SVG_SELECTOR);
-    if (rejectCookiesButton && modalSvg) {
-      rejectCookiesButton.click();
-      showNotification('Cookie consent rejected automatically');
+    if (!cookiesHandled) {
+      const rejectCookiesButton = document.querySelector(REJECT_COOKIES_SELECTOR);
+      const modalSvg = document.querySelector(MODAL_SVG_SELECTOR);
+      if (rejectCookiesButton && modalSvg) {
+        rejectCookiesButton.click();
+        cookiesHandled = true;
+        showNotification('Cookie consent rejected automatically');
+      }
     }
 
-    // Auto-accept adult content if the modal is present
     const acceptAdultContentButton = document.querySelector(
       contentClassificationSelector
     );
@@ -661,6 +667,12 @@ function handleAdsAndConsentModals() {
     if (posterElement) {
       posterElement.remove();
     }
+  }
+
+  const observer = new MutationObserver(() => {
+    if (pendingFlush) return;
+    pendingFlush = true;
+    setTimeout(flush, 50);
   });
 
   observer.observe(document.body, {

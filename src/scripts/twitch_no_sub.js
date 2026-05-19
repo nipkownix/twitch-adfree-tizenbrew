@@ -3,11 +3,10 @@ import {
   CUSTOM_PROXY_URL,
   USE_CUSTOM_PROXY
 } from '../constants/config.constants';
-import { APP_VERSION } from '../constants/global.constants';
+import rawWorkerPatch from './patch_amazon_worker.js';
 
-const patchAmazonWorkerUrl =
-  'https://adamff-dev.github.io/twitch-adfree-webos/src/scripts/patch_amazon_worker.js?v=' +
-  APP_VERSION; // For cache busting
+// Strip the ESM export marker added for Babel — it's invalid syntax in a Worker
+const workerPatchSource = rawWorkerPatch.replace(/export\s*\{\s*\};\s*$/, '');
 
 (function () {
   // From vaft script (https://github.com/pixeltris/TwitchAdSolutions/blob/master/vaft/vaft.user.js#L299)
@@ -33,15 +32,13 @@ const patchAmazonWorkerUrl =
       const blobUrl = URL.createObjectURL(
         new Blob([
           `
-            useProxy = ${useProxy};
-            proxyUrl = '${proxyUrl}';
+            var useProxy = ${useProxy};
+            var proxyUrl = '${proxyUrl}';
 
-            importScripts(
-              '${patchAmazonWorkerUrl}',
-            );
+            ${workerPatchSource}
 
             ${workerString}
-        `
+          `
         ])
       );
       super(blobUrl);

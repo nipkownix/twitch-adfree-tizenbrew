@@ -116,23 +116,36 @@ import { showNotification } from './ui';
   }
 
   function observeChat() {
-    const observer = new MutationObserver((mutations) => {
-      if (!document.querySelector(CHAT_SELECTOR)) {
-        return;
-      }
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (
-            node.nodeType === Node.ELEMENT_NODE &&
-            node.classList.contains(MESSAGE_SELECTOR)
-          ) {
-            processChatMessage(node);
-          }
+    let chatObserver = null;
+
+    function attachToChatContainer() {
+      const chatContainer = document.querySelector(CHAT_SELECTOR);
+      if (!chatContainer) return false;
+
+      chatObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (
+              node.nodeType === Node.ELEMENT_NODE &&
+              node.classList.contains(MESSAGE_SELECTOR)
+            ) {
+              processChatMessage(node);
+            }
+          });
         });
       });
-    });
+      chatObserver.observe(chatContainer, { childList: true, subtree: true });
+      return true;
+    }
 
-    observer.observe(document, { childList: true, subtree: true });
+    if (!attachToChatContainer()) {
+      const waitObserver = new MutationObserver(() => {
+        if (attachToChatContainer()) {
+          waitObserver.disconnect();
+        }
+      });
+      waitObserver.observe(document.body, { childList: true, subtree: false });
+    }
   }
 
   function init() {
@@ -194,7 +207,7 @@ import { showNotification } from './ui';
           console.error('Error fetching user ID:', error);
         }
       }
-    }, 1000);
+    }, 3000);
 
     observeChat();
   }

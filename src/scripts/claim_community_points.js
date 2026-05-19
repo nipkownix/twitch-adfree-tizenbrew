@@ -172,7 +172,7 @@ setInterval(async () => {
       claimIntervalMillis
     );
   }
-}, 1000);
+}, 3000);
 
 // #endregion Main script
 

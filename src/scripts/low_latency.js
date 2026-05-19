@@ -5,10 +5,8 @@ import { ENABLE_LOW_LATENCY } from '../constants/config.constants.js';
 let curVideo = null;
 let minDiff = 9999;
 let diff = 0;
-let avgAboveDiff = 0;
 let banner = null;
 let lowLatencyEnabled = false;
-let showBanner = true;
 let lowLatencyInterval = null;
 
 /**
@@ -42,27 +40,34 @@ function createLatencyBanner() {
  */
 function initializeLowLatency() {
   checkCurVideo();
-  if (curVideo && lowLatencyEnabled) {
-    try {
-      // Wait until buffer is ready before jumping to live edge
-      function waitForBuffer() {
-        if (curVideo.buffered.length > 0) {
-          curVideo.currentTime = curVideo.buffered.end(0);
 
-          // Reset stats
+  if (!curVideo) {
+    if (lowLatencyEnabled) {
+      setTimeout(initializeLowLatency, 1000);
+    }
+    return;
+  }
+
+  if (lowLatencyEnabled) {
+    try {
+      const videoAtInit = curVideo;
+
+      function waitForBuffer() {
+        if (!lowLatencyEnabled || curVideo !== videoAtInit) return;
+        if (videoAtInit.buffered.length > 0) {
+          videoAtInit.currentTime = videoAtInit.buffered.end(0);
+
           function checkMinDiff() {
             setTimeout(() => {
               if (diff <= 0) {
                 checkMinDiff();
               }
               minDiff = diff;
-              avgAboveDiff = 0;
             }, 5000);
           }
           checkMinDiff();
         } else {
-          // Buffer not ready yet, check again in 100ms
-          setTimeout(waitForBuffer, 5000);
+          setTimeout(waitForBuffer, 1000);
         }
       }
       waitForBuffer();
@@ -90,31 +95,13 @@ function checkLatency() {
             minDiff = diff;
           }
 
-          let shouldShowBanner = false;
-
-          // Show banner if delay is significant
-          if (diff > 3 && (diff > minDiff * 2 || diff > 15)) {
-            if (diff + 1 > avgAboveDiff) {
-              if (showBanner && banner) {
-                const videoPos = curVideo.getBoundingClientRect();
-                banner.style.left = videoPos.left + 'px';
-                banner.style.top = videoPos.top + 'px';
-                banner.style.display = 'block';
-
-                const diffRound = Math.round(diff * 10) / 10;
-                const latencyValueElement =
-                  banner.querySelector('.taf-latency-value');
-                if (latencyValueElement) {
-                  latencyValueElement.textContent = diffRound;
-                }
-                shouldShowBanner = true;
-              }
+          if (banner) {
+            const diffRound = Math.round(diff * 10) / 10;
+            const latencyValueElement = banner.querySelector('.taf-latency-value');
+            if (latencyValueElement) {
+              latencyValueElement.textContent = diffRound;
             }
-            avgAboveDiff = (avgAboveDiff + diff) / 2;
-          }
-
-          if (!shouldShowBanner && banner) {
-            banner.style.display = 'none';
+            banner.style.display = 'block';
           }
         }
       }
@@ -130,12 +117,16 @@ function checkLatency() {
 function startLowLatencyMonitoring() {
   if (lowLatencyInterval) return;
 
-  // Initialize immediately
   initializeLowLatency();
 
-  // Check every second
+  let lastVideo = curVideo;
   lowLatencyInterval = setInterval(() => {
     checkLatency();
+    if (curVideo !== lastVideo) {
+      lastVideo = curVideo;
+      minDiff = 9999;
+      initializeLowLatency();
+    }
   }, 5000);
 }
 
@@ -152,10 +143,8 @@ function stopLowLatencyMonitoring() {
     banner.style.display = 'none';
   }
 
-  // Reset variables
   minDiff = 9999;
   diff = 0;
-  avgAboveDiff = 0;
 }
 
 /**
@@ -191,22 +180,6 @@ function initLowLatency() {
     updateLowLatencyState();
   });
 
-  // Re-initialize when video changes (e.g., switching streams)
-  const observer = new MutationObserver(() => {
-    if (lowLatencyEnabled) {
-      checkCurVideo();
-      if (curVideo && curVideo.buffered.length > 0) {
-        // Video might have changed, reset stats
-        minDiff = 9999;
-        avgAboveDiff = 0;
-      }
-    }
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
 }
 
 // Initialize when DOM is ready
